@@ -51,40 +51,47 @@ class App extends React.Component {
         ]
       });
     }
-    // console.log(
-    //   "displayText[displayText.length - 1].value",
-    //   displayText[displayText.length - 1].value
-    // );
-    // if (
-    //   displayText[displayText.length - 1].value === "."
-    // ) {
-    //   let checkDecFunc = currentValue => {
-    //     console.log("deeeee", currentValue);
-    //     return currentValue.value === ".";
-    //   };
-    //   const isDecimalAlready = displayText.every(checkDecFunc);
 
-    //   console.log("isDecimalAlready", isDecimalAlready);
-    // }
+    const allOperators = ["+", "-", "*", "/"];
+    const operatorsExcludeMinus = ["+", "*", "/"];
 
-    //validate two or more operators consecutives
-    if (
-      displayText.length > 2 &&
-      (displayText[displayText.length - 1].value === "+" ||
-        displayText[displayText.length - 1].value === "*" ||
-        displayText[displayText.length - 1].value === "/") &&
-      (displayText[displayText.length - 2].value === "+" ||
-        displayText[displayText.length - 2].value === "*" ||
-        displayText[displayText.length - 2].value === "/")
-    ) {
-      this.setState({
-        displayText: [
-          ...displayText.slice(0, displayText.length - 2),
-          ...displayText.splice(displayText.length - 1)
-        ]
-      });
+    //validate two "." in one number should not be accepted
+    if (displayText[displayText.length - 1].value === ".") {
+      for (let i = displayText.length - 2; i >= 0; i--) {
+        if (allOperators.includes(displayText[i].value)) {
+          i = -1;
+        } else {
+          if (displayText[i].value === ".") {
+            this.setState({
+              displayText: [...displayText.slice(0, displayText.length - 1)]
+            });
+          }
+        }
+      }
     }
 
+    //validate two or more consecutives operators
+    if (
+      operatorsExcludeMinus.includes(displayText[displayText.length - 1].value)
+    ) {
+      if (allOperators.includes(displayText[displayText.length - 2].value)) {
+        if (allOperators.includes(displayText[displayText.length - 3].value)) {
+          this.setState({
+            displayText: [
+              ...displayText.slice(0, displayText.length - 3),
+              displayText[displayText.length - 1]
+            ]
+          });
+        } else {
+          this.setState({
+            displayText: [
+              ...displayText.slice(0, displayText.length - 2),
+              displayText[displayText.length - 1]
+            ]
+          });
+        }
+      }
+    }
     //validate when press equals
     if (displayText[displayText.length - 1].id === "equals") {
       this.handleCalculation();
@@ -93,12 +100,20 @@ class App extends React.Component {
 
   handleCalculation = e => {
     let element = document.getElementById("display").innerText;
-    console.log("Eleemnt", typeof element);
-    const temp = element.slice(0, element.length - 1);
-    console.log("tem", typeof temp);
-    let result = eval(temp.toString());
+    let temp;
+    if (element.search("=") >= 0) {
+      temp = element.slice(0, element.length - 1);
+    } else {
+      temp = element;
+    }
+    let result = eval(temp);
+    const resultObj = {
+      label: result,
+      value: result,
+      id: "result"
+    };
     this.setState({
-      displayText: [],
+      displayText: [resultObj],
       result: result
     });
   };
@@ -120,7 +135,7 @@ class App extends React.Component {
     }
   };
   render() {
-    // console.log("this.state", JSON.stringify(this.state.displayText));
+    console.log("this.state", this.state.displayText);
     return (
       <div className="App">
         <div className="row">
@@ -128,9 +143,7 @@ class App extends React.Component {
           <div className="col-md-4">
             <div className="text-display-div cal-div card bg-secondary">
               <div className="card-body">
-                <span id="display">
-                  {this.state.result ? this.state.result : this.renderDisplay()}
-                </span>
+                <span id="display">{this.renderDisplay()}</span>
               </div>
             </div>
             <div className="row">
